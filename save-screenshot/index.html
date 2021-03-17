@@ -16,6 +16,15 @@
         .cropper {
             border: dashed 5px;
         }
+
+        .corner {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 20px;
+            height: 20px;
+            border: dashed 5px;
+        }
     </style>
 </head>
 
@@ -47,6 +56,12 @@
             });
         }
 
+        function drag(e) {
+            let parent = e.target.parent;
+            // parent.style.width += ;
+            // parent.style.height += ;
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             let body = document.body; 
             body.addEventListener("paste", async e => {
@@ -55,16 +70,27 @@
                     let canvas = document.createElement("canvas"),
                     container = document.createElement("div"),
                     cropper = document.createElement("div"),
+                    corner = document.createElement("div"),
                     context = canvas.getContext("2d"),
                     dataURL = await fileToDataURL(item.getAsFile()),
                     image = await dataURLToImage(dataURL);
 
                     container.classList.add("container");
                     cropper.classList.add("cropper");
+                    corner.classList.add("corner");
                     [canvas.height, canvas.width] = [image.height, image.width];
                     [container.style.height, container.style.width] = [cropper.style.height, cropper.style.width] = [`${image.height}px`, `${image.width}px`];
-                    cropper.draggable = true;
                     context.drawImage(image, 0, 0);
+
+                    corner.addEventListener("mousedown", e => {
+                        console.log(e.x, e.y);
+                    });
+
+                    corner.addEventListener("mouseup", e => {
+                        console.log(e.x, e.y);
+                    });
+
+                    cropper.append(corner);
                     container.append(canvas, cropper);
                     body.insertBefore(container, body.firstChild);
                 }
