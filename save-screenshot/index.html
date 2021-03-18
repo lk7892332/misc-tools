@@ -16,15 +16,6 @@
         .cropper {
             border: dashed 5px;
         }
-
-        .corner {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            width: 20px;
-            height: 20px;
-            border: dashed 5px;
-        }
     </style>
 </head>
 
@@ -57,9 +48,24 @@
         }
 
         function drag(e) {
-            let parent = e.target.parent;
-            // parent.style.width += ;
-            // parent.style.height += ;
+            let target = e.target;
+            let offsetX = e.offsetX;
+            let offsetY = e.offsetY;
+            let diffX = e.movementX
+            let diffY = e.movementY;
+            let w = parseInt(target.style.width);
+            let h = parseInt(target.style.height);
+            let top = parseInt(target.style.top) || 0;
+            let left = parseInt(target.style.left) || 0;
+            console.log(offsetX, offsetY, w, h, top, left);
+            if (offsetX > w - 25 && offsetY > h - 25) {
+                target.style.width = `${w + diffX}px`;
+                target.style.height = `${h + diffY}px`;
+            }
+            else {
+                target.style.left= `${left + diffX}px`;
+                target.style.top = `${top + diffY}px`;
+            }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -70,27 +76,24 @@
                     let canvas = document.createElement("canvas"),
                     container = document.createElement("div"),
                     cropper = document.createElement("div"),
-                    corner = document.createElement("div"),
                     context = canvas.getContext("2d"),
                     dataURL = await fileToDataURL(item.getAsFile()),
                     image = await dataURLToImage(dataURL);
 
                     container.classList.add("container");
                     cropper.classList.add("cropper");
-                    corner.classList.add("corner");
                     [canvas.height, canvas.width] = [image.height, image.width];
                     [container.style.height, container.style.width] = [cropper.style.height, cropper.style.width] = [`${image.height}px`, `${image.width}px`];
                     context.drawImage(image, 0, 0);
 
-                    corner.addEventListener("mousedown", e => {
-                        console.log(e.x, e.y);
+                    cropper.addEventListener("mousedown", e => {
+                        cropper.addEventListener("mousemove", drag);
                     });
 
-                    corner.addEventListener("mouseup", e => {
-                        console.log(e.x, e.y);
+                    cropper.addEventListener("mouseup", e => {
+                        cropper.removeEventListener("mousemove", drag);
                     });
 
-                    cropper.append(corner);
                     container.append(canvas, cropper);
                     body.insertBefore(container, body.firstChild);
                 }
