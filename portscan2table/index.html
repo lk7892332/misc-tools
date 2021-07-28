@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+
+        table,
+        td {
+            border: 1px solid;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="radio" name="type" id="aps" value="Advance Port Scanner" checked>
+    <label for="aps">Advance Port Scanner</label>
+    <input type="radio" name="type" id="nmap" value="Nmap">
+    <label for="nmap">Nmap</label>
+    <input type="file" id="file">
+    <div id="output"></div>
+    <script>
+        function readFile(file) {
+            return new Promise((res, rej) => {
+                let reader = new FileReader();
+                reader.addEventListener("load", e => {
+                    res(reader.result);
+                });
+                reader.addEventListener("error", e => {
+                    rej(e);
+                })
+                reader.readAsText(file);
+            });
+        }
+
+        async function generate(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            
+            let type = document.querySelector("input[name=type]:checked").value;
+            let output = document.getElementById("output");
+            let xmlContent = await readFile(file);
+            let parser = new DOMParser();
+            xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+            let result = [];
+            let table = document.createElement("table");
+
+            switch (type) {
+                case "Advance Port Scanner":
+                    let rows = xmlDoc.querySelectorAll("row");
+                    rows.forEach(row => {
+                        result.push([
+                            "",
+                            row.getAttribute("ip"),
+                            [...row.querySelectorAll(":scope service")].map(service => service.getAttribute("port")).join("、")
+                        ]);
+                    });
+                    let sortedResult = result.filter(row => row[1]).sort((a, b) => a[1].split(".")[3] - b[1].split(".")[3]);
+                    sortedResult.forEach(row => {
+                        let tr = document.createElement("tr");
+                        row.forEach(data => {
+                            let td = document.createElement("td");
+                            td.textContent = data;
+                            tr.append(td);
+                        });
+                        table.appendChild(tr);
+                    });
+                    break;
+
+                case "Nmap":
+                    let hosts = xmlDoc.querySelectorAll("host");
+                    hosts.forEach(host => {
+                        result.push([
+                            "",
+                            host.querySelector(":scope address").getAttribute("addr"),
+                            [...host.querySelectorAll(":scope port")].filter(port => port.querySelector("state[state=open]")).map(port => port.getAttribute("portid")).join("、")
+                        ]);
+                    });
+                    result.forEach(row => {
+                        let tr = document.createElement("tr");
+                        row.forEach(data => {
+                            let td = document.createElement("td");
+                            td.textContent = data;
+                            tr.append(td);
+                        });
+                        table.appendChild(tr);
+                    });
+                    break;
+
+                default:
+                    break;
+            }
+
+            output.innerHTML = "";
+            output.appendChild(table);
+        }
+
+        document.getElementById("file").addEventListener("change", generate);
+    </script>
+</body>
+
+</html>
